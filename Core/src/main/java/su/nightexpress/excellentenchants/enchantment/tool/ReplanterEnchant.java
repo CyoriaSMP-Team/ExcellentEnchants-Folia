@@ -155,7 +155,7 @@ public class ReplanterEnchant extends GameEnchantment implements InteractEnchant
 
         // Replant the gathered crops with a new one.
         if (this.takeSeeds(player, dataPlant.getPlacementMaterial())) {
-            plugin.runTask(() -> {
+            org.bukkit.Bukkit.getRegionScheduler().run(plugin, blockPlant.getLocation(), task -> {
                 blockPlant.setType(plant.getMaterial());
                 plant.setAge(0);
                 blockPlant.setBlockData(plant);

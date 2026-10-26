@@ -115,7 +115,7 @@ public class AnvilListener extends AbstractListener<EnchantsPlugin> {
         PDCUtil.set(recharged, this.rechargedKey, count);
         event.setResult(recharged);
 
-        this.plugin.runTask(() -> event.getView().setRepairCost(chargable.size()));
+        event.getView().getPlayer().getScheduler().run(this.plugin, task -> event.getView().setRepairCost(chargable.size()), null);
         return true;
     }
 

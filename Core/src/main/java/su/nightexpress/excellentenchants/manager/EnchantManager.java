@@ -225,12 +225,26 @@ public class EnchantManager extends AbstractManager<EnchantsPlugin> {
     }
 
     private void tickPassiveEnchants() {
+        // The global Folia region cannot read entity equipment. Ownership can move
+        // between regions, so dispatch through each entity's own scheduler.
         this.getPassiveEnchantEntities().forEach(entity -> {
-            this.handleInSlots(entity, EntityUtil.EQUIPMENT_SLOTS, EnchantRegistry.PASSIVE, (item, enchant,
-                                                                                             level) -> enchant
-                                                                                                 .onTrigger(entity,
-                                                                                                     item, level));
+            if (Version.isFolia()) {
+                entity.getScheduler().run(this.plugin, task -> this.tickPassiveEnchantsFor(entity), null);
+            }
+            else {
+                this.tickPassiveEnchantsFor(entity);
+            }
         });
+    }
+
+    private void tickPassiveEnchantsFor(LivingEntity entity) {
+        // Always check life cycle on the owning region thread, never globally.
+        if (entity.isDead() || !entity.isValid()) return;
+
+        this.handleInSlots(entity, EntityUtil.EQUIPMENT_SLOTS, EnchantRegistry.PASSIVE, (item, enchant,
+                                                                                         level) -> enchant
+                                                                                             .onTrigger(entity,
+                                                                                                 item, level));
     }
 
 
@@ -243,7 +257,8 @@ public class EnchantManager extends AbstractManager<EnchantsPlugin> {
             });
         }
 
-        entities.removeIf(Entity::isDead);
+        // In Folia, touching entity state here would run on the global region.
+        if (!Version.isFolia()) entities.removeIf(Entity::isDead);
 
         return entities;
     }
